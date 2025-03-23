@@ -13,6 +13,13 @@ async function readLast() {
 }
 
 async function writeDate(date: Date) {
+  // Validate the date before using toISOString()
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    console.error("Invalid date provided:", date);
+    // Use current date as fallback
+    date = new Date();
+  }
+  
   fs.writeFileSync(
     __dirname + "/../../data/last.txt",
     date.toISOString(),

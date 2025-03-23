@@ -88,7 +88,7 @@ async function runQueue() {
             item.title
           })`
         );
-        db.writeDate(new Date(item.date));
+        db.writeDate(parseRssDate(item.date));
         if (i === queueSnapshot.length - 1) {
           queueRunning = false;
           queueSnapshot = [];
@@ -119,6 +119,32 @@ async function writeQueue({
   );
   queue.push({ content, embed, languages, title, date });
   return queue;
+}
+
+function parseRssDate(dateString: string): Date {
+  // Try standard parsing first
+  let date = new Date(dateString);
+  
+  // Check if the date is valid
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+  
+  // Handle non-standard formats like "Sun, 03/23/2025 - 03:23"
+  try {
+    // Extract parts from format like "Sun, 03/23/2025 - 03:23"
+    const match = dateString.match(/(\d{2})\/(\d{2})\/(\d{4}).*?(\d{2}):(\d{2})/);
+    if (match) {
+      const [, month, day, year, hours, minutes] = match;
+      return new Date(`${year}-${month}-${day}T${hours}:${minutes}:00Z`);
+    }
+  } catch (error) {
+    console.error(`Failed to parse date string: ${dateString}`, error);
+  }
+  
+  // Return current date as fallback
+  console.warn(`Using current date as fallback for invalid date: ${dateString}`);
+  return new Date();
 }
 
 export default { writeQueue, start };
